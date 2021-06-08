@@ -1,0 +1,70 @@
+
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+#libraries install
+
+import pandas as pd
+!pip install xlrd
+!pip install openpyxl
+import seaborn as sns
+from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+
+#data upload
+
+
+HDnames=['Cement','BFS','FLA','Water','SP','CA','FA','Age','CCS']
+cdata=pd.read_excel("../input/civildata/023 ConcreteData.xlsx",engine="openpyxl",names=HDnames)
+cdata.head()
+
+#data visualisation
+sns.set(style='ticks')
+sns.boxplot(data=cdata)
+sns.pairplot(data=cdata)
+
+#scaling data
+scaler=MinMaxScaler()
+print(scaler.fit(cdata))
+
+scaleddata=scaler.fit_transform(cdata)
+scaleddata=pd.DataFrame(scaleddata,columns=HDnames)
+
+print(scaleddata.shape)
+
+
+sns.boxplot(data=scaleddata)
+
+#deep learning model
+
+predictors=pd.DataFrame(scaleddata.iloc[:,:8])
+response=pd.DataFrame(scaleddata.iloc[:,8])
+
+pred_train,pred_test,resp_train,resp_test=train_test_split(predictors,response,test_size=0.3,random_state=1)
+print(pred_train.shape,pred_test.shape,resp_train.shape,resp_test.shape)
+
+from keras.models import Sequential
+from keras.layers import Dense
+model=Sequential()
+model.add(Dense(20,input_dim=8,activation='relu'))
+model.add(Dense(10,input_dim=8,activation='relu'))
+model.add(Dense(10,input_dim=8,activation='relu'))
+model.add(Dense(1,input_dim=8,activation='linear'))
+
+model.compile(optimizer='adam',loss='mean_squared_error',metrics=['accuracy'])
+
+model.fit(pred_train,resp_train,epochs=1000,verbose=2)
+
+model.summary()
+
+
+from sklearn.metrics import r2_score
+y_pred=model.predict(pred_test)
+print(r2_score(resp_test,y_pred))
